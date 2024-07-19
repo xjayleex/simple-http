@@ -1,7 +1,10 @@
 # Use the official Golang image to create a build artifact.
 # This is the first stage, called "builder".
-FROM golang:1.16 AS builder
-
+FROM golang:1.21 AS builder
+ENV GO111MODULE=on \
+    CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64
 # Create and change to the app directory.
 WORKDIR /app
 
