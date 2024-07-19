@@ -5,7 +5,10 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"sync"
 )
+
+var postMutex sync.Mutex
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
@@ -15,6 +18,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintf(w, "GET request for %s", r.URL.Path)
 	case "POST":
+		postMutex.Lock()
+		defer postMutex.Unlock()
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, "Cannot read body", http.StatusBadRequest)
