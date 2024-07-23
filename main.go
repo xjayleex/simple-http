@@ -6,11 +6,12 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 )
 
 var postMutex sync.Mutex
 
-func handler(w http.ResponseWriter, r *http.Request) {
+func alwayFailingHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		log.Printf("GET request,\nPath: %s\nHeaders:\n%s\n", r.URL.Path, r.Header)
@@ -20,6 +21,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	case "POST":
 		postMutex.Lock()
 		defer postMutex.Unlock()
+		time.Sleep(1 * time.Second)
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, "Cannot read body", http.StatusBadRequest)
@@ -27,7 +29,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Printf("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n", r.URL.Path, r.Header, body)
 		w.Header().Set("Content-Type", "text/html")
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(w, "POST request for %s", r.URL.Path)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -35,7 +37,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/", handler)
+	http.HandleFunc("/", alwayFailingHandler)
 
 	port := "80"
 	log.Printf("Starting httpd on port %s...\n", port)
